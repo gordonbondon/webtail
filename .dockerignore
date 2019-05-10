@@ -1,0 +1,8 @@
+*
+!go.*
+!cmd
+!html
+!tailer
+!worker
+!.git
+!Makefile

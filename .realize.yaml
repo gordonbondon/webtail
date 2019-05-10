@@ -1,0 +1,37 @@
+settings:
+  legacy:
+    force: false
+    interval: 0s
+server:
+  status: false
+  open: false
+  port: 5002
+  host: localhost
+schema:
+  - name: app
+    path: .
+    commands:
+      install:
+        status: true
+        method: go build -o webtail ./cmd/webtail
+      run:
+        status: true
+        method: ./webtail
+    args:
+      - --listen=:8081
+      - --log_level=debug
+      - --root=/data
+      - --html=./html
+    watcher:
+      paths:
+        - /
+      ignore_paths:
+        - .git
+        - Dockerfile
+        - Makefile
+      extensions:
+        - go
+        - html
+        - css
+        - js
+        - yaml

@@ -37,6 +37,9 @@ GO_VER        ?= 1.9.2-alpine3.6
 # docker app for change inside containers
 DOCKER_BIN    ?= docker
 
+# docker-compose
+DC_BIN        ?= docker-compose
+
 # docker app log files directory
 LOG_DIR       ?= /var/log
 
@@ -48,7 +51,7 @@ SERVER_PORT   ?= 8080
 
 # -----------------------------------------------------------------------------
 
-.PHONY: all doc gen build-standalone coverage cov-html build test lint fmt vet vendor up down build-docker clean-docker
+.PHONY: all doc gen tools build-standalone coverage cov-html build test lint fmt vet up down build-docker clean-docker
 
 ##
 ## Available targets are:
@@ -69,10 +72,14 @@ doc:
 	@echo "Open http://localhost:6060/pkg/LeKovr/webtail"
 	@godoc -http=:6060
 
+tools:
+	GO111MODULE=off go get -u golang.org/x/lint/golint
+	GO111MODULE=off go get -u github.com/go-bindata/go-bindata/...
+
 ## Build cmds for scratch docker
 build-standalone: lint vet coverage
 	[ -d .git ] && GH=`git rev-parse HEAD` || GH=nogit ; \
-	  GOOS=linux CGO_ENABLED=0 $(GO) build -a -v -o $(PRG) -ldflags \
+	  GO111MODULE=on CGO_ENABLED=0 $(GO) build -a -v -o $(PRG) -ldflags \
 	  "-X main.Build=$(STAMP) -X main.Commit=$$GH" ./cmd/$(PRG)
 
 ## Build cmds
@@ -109,13 +116,6 @@ fmt:
 ## Run vet
 vet:
 	$(GO) vet ./tailer/... && $(GO) vet ./worker/... && $(GO) vet ./cmd/...
-
-## Install vendor deps
-vendor:
-	@echo "*** $@:glide ***"
-	which glide > /dev/null || curl https://glide.sh/get | sh
-	@echo "*** $@ ***"
-	glide install
 
 # ------------------------------------------------------------------------------
 
@@ -157,7 +157,7 @@ clean:
 
 ## Start service in container
 up:
-up: CMD=up -d $(DC_SERVICE)
+up: CMD=up $(DC_SERVICE)
 up: dc
 
 ## Stop service
@@ -179,17 +179,7 @@ clean-docker:
 # и относительные тома новых контейнеров могли его использовать
 ## run docker-compose
 dc: docker-compose.yml
-	@$(DOCKER_BIN) run --rm  -i \
-  -v /var/run/docker.sock:/var/run/docker.sock \
-  -v $$PWD:$$PWD \
-  -w $$PWD \
-  --env=golang_version=$(GO_VER) \
-  --env=SERVER_PORT=$(SERVER_PORT) \
-  --env=LOG_DIR=$(LOG_DIR) \
-  --env=DC_IMAGE=$(DC_IMAGE) \
-  docker/compose:$(DC_VER) \
-  -p $(PRG) \
-  $(CMD)
+	LOG_DIR=$(LOG_DIR) $(DC_BIN) $(CMD)
 
 ## Show available make targets
 help:
