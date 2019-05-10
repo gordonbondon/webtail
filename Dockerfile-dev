@@ -1,0 +1,16 @@
+FROM golang:1.12.5-alpine3.9
+
+RUN apk add --no-cache make bash git curl
+
+RUN GO111MODULE=off go get -u golang.org/x/lint/golint \
+    github.com/go-bindata/go-bindata/... \
+    github.com/tockins/realize
+
+ENV CGO_ENABLED=0
+ENV GO111MODULE=on
+
+WORKDIR /app
+VOLUME /app
+
+ENTRYPOINT ["realize"]
+CMD ["start"]

@@ -3,7 +3,7 @@
 # ARG golang_version
 # FROM golang:$golang_version
 
-FROM golang:1.9.2-alpine3.6
+FROM golang:1.12.5-alpine3.9
 
 MAINTAINER Alexey Kovrizhkin <lekovr+docker@gmail.com>
 
@@ -11,15 +11,11 @@ MAINTAINER Alexey Kovrizhkin <lekovr+docker@gmail.com>
 RUN apk add --no-cache make bash git curl
 
 WORKDIR /go/src/github.com/LeKovr/webtail
-COPY cmd cmd
-COPY html html
-COPY tailer tailer
-COPY worker worker
-COPY Makefile .
-COPY glide.* ./
+COPY . .
 
-RUN go get -u github.com/golang/lint/golint
-RUN make vendor
+ENV CGO_ENABLED=0
+ENV GO111MODULE=on
+RUN make tools
 RUN make build-standalone
 
 FROM scratch
